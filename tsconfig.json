@@ -30,7 +30,8 @@
 
     "outDir": "dist",
     "rootDir": "src",
-    "baseUrl": "."
+    "baseUrl": ".",
+    "typeRoots": ["./src/@types", "./node_modules/@types"],
   },
   "exclude": [
     "dist",
