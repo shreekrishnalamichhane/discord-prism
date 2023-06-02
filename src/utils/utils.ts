@@ -116,7 +116,7 @@ export async function handleUpload(options: any) {
     else console.log(chalk.greenBright('Webhook URL is valid'))
 
     // Fetch all files from the current directory
-    const files = getFiles('./images', [], options.all ? true : false)
+    const files = getFiles('.', [], options.all ? true : false)
     totalLength = files.length
 
     console.log(chalk.blueBright(`Found ${totalLength} files.`))
