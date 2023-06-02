@@ -5,6 +5,8 @@ import { ValidateUpload } from '../validator.js'
 import { ZodError } from 'zod'
 import mime from 'mime'
 import chalk from 'chalk'
+import convert from 'heic-convert'
+import { TFileinfo } from 'src/@types/types.js'
 
 let totalLength: number = 0
 let currentIndex: number = 0
@@ -21,6 +23,16 @@ export async function validateWebhookURL(webhookURL: string) {
   } catch (error) {
     return false
   }
+}
+
+export async function heicToPng(inputBuffer: Buffer): Promise<ArrayBuffer> {
+  const outputBuffer = await convert({
+    buffer: inputBuffer, // the HEIC file buffer
+    format: 'PNG', // output format
+    quality: 1, // the jpeg compression quality, between 0 and 1
+  })
+
+  return outputBuffer
 }
 
 export function getFiles(dir: string, files: string[] = [], recursive: boolean = false) {
@@ -52,13 +64,21 @@ export function handleError(error: any) {
 export async function sendFile(index: number, files: string[], webhookUrl: string): Promise<any> {
   const file = files[index]
 
-  const fileInfo = {
+  const fileInfo: TFileinfo = {
     name: path.basename(file),
     extension: path.extname(file),
     size: fs.statSync(file).size,
     formattedSize: humanFileSize(fs.statSync(file).size),
     type: mime.getType(file),
     content: fs.readFileSync(file),
+  }
+
+  if (fileInfo.extension.toLowerCase() === '.heic') {
+    console.log(chalk.cyanBright('Converting HEIC to PNG...'))
+    fileInfo.name = fileInfo.name.replace('.heic', '.png')
+    fileInfo.content = await heicToPng(fileInfo.content as Buffer)
+    fileInfo.extension = '.png'
+    fileInfo.type = 'image/png'
   }
 
   if (fileInfo.size > 20000000) {
