@@ -4,3 +4,6 @@
 [ -n "$CI" ] && exit 0
 
 npx --no-install lint-staged
+yarn format
+yarn clean
+yarn build
