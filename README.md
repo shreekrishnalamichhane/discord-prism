@@ -1,8 +1,30 @@
-# NodeJS Starter Project
+![Discord Prism Logo](./assets/logo.png)
 
-Project bootstrapped using [NodeJS Starter ToolKit](https://github.com/vitorsalgado/create-nodejs-ts).  
-Visit the repository for more details.
+Discord Prism is a image backup tool that can backup your images to the dicord channel through webhook.
 
-## Getting Started
+## Installation
 
-Review the generated code, and it's recommended to run a `npm init` to adjust basic project configurations before start.
+```bash
+```
+
+## Usage
+
+```
+Usage: main [options] [command]
+
+Uploads all files in the current directory to a Discord webhook
+
+Options:
+  -V, --version         output the version number
+  -w, --webhook <char>
+  -a, --all
+  -h, --help            display help for command
+
+Commands:
+  upload|u              upload files to discord
+  help [command]        display help for command
+```
+
+## License
+
+[MIT](https://opensource.org/license/mit/)
