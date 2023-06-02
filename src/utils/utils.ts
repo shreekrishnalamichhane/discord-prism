@@ -5,7 +5,6 @@ import { ValidateUpload } from '../validator.js'
 import { ZodError } from 'zod'
 import mime from 'mime'
 import chalk from 'chalk'
-import { exit } from 'process'
 
 let totalLength: number = 0
 let currentIndex: number = 0
@@ -50,7 +49,7 @@ export function handleError(error: any) {
   } else console.log(error.message)
 }
 
-export async function sendFile(index: number, files: string[], webhookUrl: string) {
+export async function sendFile(index: number, files: string[], webhookUrl: string): Promise<any> {
   const file = files[index]
 
   const fileInfo = {
@@ -68,11 +67,8 @@ export async function sendFile(index: number, files: string[], webhookUrl: strin
     console.log(
       chalk.redBright(`${progress} ${info} - ${chalk.redBright('Error: File size is too large! Skipping...')}`),
     )
-    if (currentIndex < totalLength - 1) sendFile(++currentIndex, files, webhookUrl)
-    else {
-      console.log(chalk.greenBright('Done!'))
-      exit(0)
-    }
+    if (currentIndex < totalLength - 1) return sendFile(++currentIndex, files, webhookUrl)
+    else console.log(chalk.greenBright('Done!'))
   }
 
   const contentBlob = new Blob([fileInfo.content])
@@ -90,15 +86,12 @@ export async function sendFile(index: number, files: string[], webhookUrl: strin
 
   console.log(`${progress} ${info} - ${status}`)
   if (resp.status == 200) {
-    if (currentIndex < totalLength - 1) sendFile(++currentIndex, files, webhookUrl)
-    else {
-      console.log(chalk.greenBright('Done!'))
-      exit(0)
-    }
+    if (currentIndex < totalLength - 1) return sendFile(++currentIndex, files, webhookUrl)
+    else console.log(chalk.greenBright('Done!'))
   } else if (resp.status == 429) {
     console.log(chalk.redBright('Rate limited, waiting 2 seconds...'))
     setTimeout(() => {
-      sendFile(currentIndex, files, webhookUrl)
+      return sendFile(currentIndex, files, webhookUrl)
     }, 2000)
   } else console.log(chalk.bgRedBright('Error: ' + resp.statusText))
 }
@@ -121,7 +114,7 @@ export async function handleUpload(options: any) {
 
     console.log(chalk.blueBright(`Found ${totalLength} files.`))
 
-    sendFile(0, files, options.webhook)
+    return sendFile(0, files, options.webhook)
   } catch (error: any) {
     handleError(error)
   }
