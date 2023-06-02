@@ -5,12 +5,13 @@ Discord Prism is a image backup tool that can backup your images to the dicord c
 ## Installation
 
 ```bash
+npm i -g discord-prism
 ```
 
 ## Usage
 
 ```
-Usage: main [options] [command]
+Usage: discord-prism [options] [command]
 
 Uploads all files in the current directory to a Discord webhook
 
