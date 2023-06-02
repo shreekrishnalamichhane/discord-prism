@@ -5,6 +5,7 @@ import { ValidateUpload } from '../validator.js'
 import { ZodError } from 'zod'
 import mime from 'mime'
 import chalk from 'chalk'
+import { exit } from 'process'
 
 let totalLength: number = 0
 let currentIndex: number = 0
@@ -61,6 +62,19 @@ export async function sendFile(index: number, files: string[], webhookUrl: strin
     content: fs.readFileSync(file),
   }
 
+  if (fileInfo.size > 20000000) {
+    const progress = chalk.blueBright(`[${index + 1}/${totalLength}]`)
+    const info = chalk.magentaBright(`${fileInfo.name}(${fileInfo.formattedSize})`)
+    console.log(
+      chalk.redBright(`${progress} ${info} - ${chalk.redBright('Error: File size is too large! Skipping...')}`),
+    )
+    if (currentIndex < totalLength - 1) sendFile(++currentIndex, files, webhookUrl)
+    else {
+      console.log(chalk.greenBright('Done!'))
+      exit(0)
+    }
+  }
+
   const contentBlob = new Blob([fileInfo.content])
 
   // Create a FormData object and append the file
@@ -76,8 +90,11 @@ export async function sendFile(index: number, files: string[], webhookUrl: strin
 
   console.log(`${progress} ${info} - ${status}`)
   if (resp.status == 200) {
-    if (currentIndex < totalLength) sendFile(currentIndex++, files, webhookUrl)
-    else console.log(chalk.greenBright('Done!'))
+    if (currentIndex < totalLength - 1) sendFile(++currentIndex, files, webhookUrl)
+    else {
+      console.log(chalk.greenBright('Done!'))
+      exit(0)
+    }
   } else if (resp.status == 429) {
     console.log(chalk.redBright('Rate limited, waiting 2 seconds...'))
     setTimeout(() => {
@@ -99,7 +116,7 @@ export async function handleUpload(options: any) {
     else console.log(chalk.greenBright('Webhook URL is valid'))
 
     // Fetch all files from the current directory
-    const files = getFiles('.', [], options.all ? true : false)
+    const files = getFiles('./images', [], options.all ? true : false)
     totalLength = files.length
 
     console.log(chalk.blueBright(`Found ${totalLength} files.`))
