@@ -1,16 +1,11 @@
 import { z } from 'zod'
-import { TUpload } from './@types/types.js'
 
 const validateUploadSchema = z.object({
-  webhook: z
-    .string({
-      errorMap: () => {
-        return { message: 'Webhook should be url' }
-      },
-    })
-    .nonempty({
-      message: 'Webhook is required',
-    }),
+  webhook: z.string({
+    errorMap: () => {
+      return { message: 'Webhook should be url' }
+    },
+  }),
   all: z
     .boolean({
       errorMap: () => {
@@ -18,7 +13,23 @@ const validateUploadSchema = z.object({
       },
     })
     .optional(),
+  skip: z
+    .string({
+      errorMap: () => {
+        return { message: 'Option [--skip | -s] should be a number.' }
+      },
+    })
+    .default('0')
+    .transform(data => {
+      const val: number = Number(data)
+      if (isNaN(val)) throw new Error('Invalid value. Option [--skip | -s] should be a number.')
+      if (!isNaN(val) && val < 0) return 0
+      return val
+    }),
 })
+
+export type TUpload = z.infer<typeof validateUploadSchema>
+
 export function ValidateUpload(data: TUpload) {
-  validateUploadSchema.parse(data)
+  return validateUploadSchema.parse(data)
 }

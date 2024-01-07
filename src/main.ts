@@ -10,8 +10,9 @@ console.log(chalk.bgBlue(chalk.white(figlet.textSync('DISCORD PRISM'))))
 program
   .version('1.0')
   .description('Uploads all files in the current directory to a Discord webhook')
-  .option('-w, --webhook <char>')
-  .option('-a, --all')
+  .option('-w, --webhook <char>', 'discord webhook URL')
+  .option('-a, --all', 'upload all files in the current directory including nested files')
+  .option('-s, --skip  <number>', 'skip the first n files in the current directory')
 
 program
   .command('upload')

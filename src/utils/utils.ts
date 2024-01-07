@@ -1,7 +1,7 @@
 import axios from 'axios'
 import fs from 'fs'
 import path from 'path'
-import { ValidateUpload } from '../validator.js'
+import { TUpload, ValidateUpload } from '../validator.js'
 import { ZodError } from 'zod'
 import mime from 'mime'
 import chalk from 'chalk'
@@ -9,7 +9,6 @@ import convert from 'heic-convert'
 import { TFileinfo } from 'src/@types/types.js'
 
 let totalLength: number = 0
-let currentIndex: number = 0
 
 export function humanFileSize(size: number) {
   const i = size == 0 ? 0 : Math.floor(Math.log(size) / Math.log(1024))
@@ -56,9 +55,9 @@ export function handleError(error: any) {
   if (error instanceof ZodError) {
     const errors = JSON.parse(error.message)
     errors.forEach((error: any) => {
-      console.log(error.message)
+      console.log(chalk.bgRed(error.message))
     })
-  } else console.log(error.message)
+  } else console.log(chalk.bgRed(error.message))
 }
 
 export async function sendFile(index: number, files: string[], webhookUrl: string): Promise<any> {
@@ -88,7 +87,7 @@ export async function sendFile(index: number, files: string[], webhookUrl: strin
     console.log(
       chalk.redBright(`${progress} ${info} - ${chalk.redBright('Error: File size is too large! Skipping...')}`),
     )
-    if (currentIndex < totalLength - 1) return sendFile(++currentIndex, files, webhookUrl)
+    if (index < totalLength - 1) return sendFile(++index, files, webhookUrl)
     else console.log(chalk.greenBright('Done!'))
   }
 
@@ -107,27 +106,27 @@ export async function sendFile(index: number, files: string[], webhookUrl: strin
 
   console.log(`${progress} ${info} - ${status}`)
   if (resp.status == 200) {
-    if (currentIndex < totalLength - 1) return sendFile(++currentIndex, files, webhookUrl)
+    if (index < totalLength - 1) return sendFile(++index, files, webhookUrl)
     else console.log(chalk.greenBright('Done!'))
   } else if (resp.status == 429) {
     console.log(chalk.redBright('Rate limited, waiting 2 seconds...'))
     setTimeout(() => {
-      return sendFile(currentIndex, files, webhookUrl)
+      return sendFile(index, files, webhookUrl)
     }, 2000)
   } else console.log(chalk.bgRedBright('Error: ' + resp.statusText))
 }
 
-export async function handleUpload(options: any) {
+export async function handleUpload(options: TUpload) {
   try {
     // Validate the data
-    ValidateUpload(options)
+    options = ValidateUpload(options)
 
     // Check if the provided webhook URL is valid
     const isWebhookURLValid = await validateWebhookURL(options.webhook)
 
     // Throw an error if the webhook URL is invalid
     if (!isWebhookURLValid) throw new Error('Invalid webhook URL')
-    else console.log(chalk.greenBright('Webhook URL is valid'))
+    else console.log(chalk.bgGreenBright('Webhook URL is valid'))
 
     // Fetch all files from the current directory
     const files = getFiles('.', [], options.all ? true : false)
@@ -135,7 +134,16 @@ export async function handleUpload(options: any) {
 
     console.log(chalk.blueBright(`Found ${totalLength} files.`))
 
-    return sendFile(0, files, options.webhook)
+    if (options.skip > 0 && totalLength > options.skip) {
+      console.log(chalk.bgYellowBright(`Skipping ${options.skip} files as requested.`))
+    }
+
+    if (totalLength <= options.skip) {
+      console.log(chalk.bgRed('Skip value is greater than the number of files found. Exiting...'))
+      return 0
+    }
+
+    return sendFile(options.skip, files, options.webhook)
   } catch (error: any) {
     handleError(error)
   }

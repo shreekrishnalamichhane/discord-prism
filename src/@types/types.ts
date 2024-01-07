@@ -1,8 +1,3 @@
-export type TUpload = {
-  webhook: string
-  all: boolean
-}
-
 export type TFileinfo = {
   name: string
   extension: string
