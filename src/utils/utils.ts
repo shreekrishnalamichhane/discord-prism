@@ -81,7 +81,8 @@ export async function sendFile(index: number, files: string[], webhookUrl: strin
     fileInfo.type = 'image/png'
   }
 
-  if (fileInfo.size > 20000000) {
+  if (fileInfo.size > 25 * 1024 * 1024) {
+    // In bytes, equivalent to 25 MB
     const progress = chalk.blueBright(`[${index + 1}/${totalLength}]`)
     const info = chalk.magentaBright(`${fileInfo.name}(${fileInfo.formattedSize})`)
     console.log(
